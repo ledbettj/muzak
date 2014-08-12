@@ -6,17 +6,17 @@ require 'trollop'
 require 'rbconfig'
 
 class Muzak
-  attr_accessor :format, :buffer_format, :sample_rate
+  attr_accessor :format, :buffer_format
+  attr_accessor :sample_rate, :bpm
 
   def initialize(opts = {})
-    @time_unit = opts[:time]   || 1.0
-    @octave    = opts[:octave] || 4
-
-    build_freq
-
+    @bpm    = opts[:bpm]    || 120
+    @octave = opts[:octave] || 4
     @sample_rate = 22_050
     @format = WaveFile::Format.new(:mono, :pcm_16, sample_rate)
     @buffer_format = WaveFile::Format.new(:mono, :float,  sample_rate)
+
+    build_freq
   end
 
 
@@ -31,7 +31,7 @@ class Muzak
     f = "/tmp/#{SecureRandom.uuid}.wav" while f.nil? || File.exists?(f)
 
     write(f, text)
-    linux? ?  `aplay #{f}` : `afplay #{f}`
+    linux? ?  `aplay -q #{f}` : `afplay #{f}`
   end
 
   def repl
@@ -56,9 +56,9 @@ class Muzak
 
   def samples_for(note)
     frequency = frequency_for(note[:frequency])
-    duration    = note[:duration]
+    duration  = note[:duration]
 
-    total_frames = (@time_unit * duration * sample_rate).to_i
+    total_frames = (seconds_per(duration) * sample_rate).to_i
     cycles_per_frame = frequency / sample_rate
 
     increment = 2 * Math::PI * cycles_per_frame
@@ -71,6 +71,9 @@ class Muzak
     end
   end
 
+  def seconds_per(duration)
+    (240.0/@bpm) * duration
+  end
 
   def frequency_for(f)
     @tbl[f] or raise ArgumentError, f
@@ -106,8 +109,8 @@ end
 
 
 opts = Trollop::options do
-  opt :time,   "Default time unit (in seconds)", type: :float, default: 1.0
-  opt :octave, "Octave to use (default 4)",      type: :int,   default: 4
+  opt :bpm,    "Beats per minute (default 240)", type: :int, default: 240
+  opt :octave, "Octave to use (default 4)",      type: :int, default: 4
 end
 
 muzak = Muzak.new(opts)
