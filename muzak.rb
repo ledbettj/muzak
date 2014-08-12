@@ -3,12 +3,17 @@ require 'wavefile'
 require 'securerandom'
 require 'readline'
 require 'trollop'
+require 'rbconfig'
 
 class Muzak
   attr_accessor :format, :buffer_format, :sample_rate
 
   def initialize(opts = {})
-    @time_unit = opts[:time] || 1.0
+    @time_unit = opts[:time]   || 1.0
+    @octave    = opts[:octave] || 4
+
+    build_freq
+
     @sample_rate = 22_050
     @format = WaveFile::Format.new(:mono, :pcm_16, sample_rate)
     @buffer_format = WaveFile::Format.new(:mono, :float,  sample_rate)
@@ -26,7 +31,7 @@ class Muzak
     f = "/tmp/#{SecureRandom.uuid}.wav" while f.nil? || File.exists?(f)
 
     write(f, text)
-    `afplay #{f}`
+    linux? ?  `aplay #{f}` : `afplay #{f}`
   end
 
   def repl
@@ -38,6 +43,10 @@ class Muzak
   end
 
   private
+
+  def linux?
+    RbConfig::CONFIG['host_os'] =~ /linux/
+  end
 
   def samples(text)
     parse(text).flat_map do |note|
@@ -62,29 +71,14 @@ class Muzak
     end
   end
 
+
   def frequency_for(f)
-    case f
-    when ' '        then 0.0
-    when 'Ab'       then 415.30
-    when 'A'        then 440.0
-    when 'A#', 'Bb' then 466.16
-    when 'B'        then 493.99
-    when 'C'        then 523.25
-    when 'C#', 'Db' then 554.37
-    when 'D'        then 587.33
-    when 'D#', 'Eb' then 622.25
-    when 'E'        then 659.25
-    when 'F'        then 698.46
-    when 'F#', 'Gb' then 739.99
-    when 'G'        then 783.99
-    when 'G#'       then 830.61
-    else
-      raise ArgumentError, f
-    end
+    @tbl[f] or raise ArgumentError, f
   end
 
   def parse(str)
     str = str.gsub(/[^A-G0-9#b ]+/, '')
+    # Note, optionally sharp or flat, followed by duration in 1/s.
     str.scan(/([A-G ][#b]?)(\d*)/).map do |note, dur|
       dur = dur.to_i
       dur = dur.zero? ? 1 : dur
@@ -92,11 +86,28 @@ class Muzak
     end
   end
 
+  R = 1.05946309436
+  def build_freq
+    c = 16.35 * (2 ** @octave)
+
+    @tbl = {
+      ' ' => 0.0,
+      'C' => c,
+    }
+
+    freq = c
+
+    [['C#', 'Db'], 'D', ['D#', 'Eb'], 'E', 'F', ['F#', 'Gb'], 'G', ['G#', 'Ab'], 'A', ['A#', 'Bb'], 'B'].each do |n|
+      freq *= R
+      Array(n).each{ |nx| @tbl[nx] = freq }
+    end
+  end
 end
 
 
 opts = Trollop::options do
-  opt :time, "Default time unit (in seconds)", type: :float, default: 1.0
+  opt :time,   "Default time unit (in seconds)", type: :float, default: 1.0
+  opt :octave, "Octave to use (default 4)",      type: :int,   default: 4
 end
 
 muzak = Muzak.new(opts)
