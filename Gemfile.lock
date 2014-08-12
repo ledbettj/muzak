@@ -1,0 +1,12 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    trollop (2.0)
+    wavefile (0.6.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  trollop
+  wavefile
