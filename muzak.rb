@@ -55,7 +55,7 @@ class Muzak
   end
 
   def samples_for(note)
-    frequency = frequency_for(note[:frequency])
+    frequency = frequency_for(note)
     duration  = note[:duration]
 
     total_frames = (seconds_per(duration) * sample_rate).to_i
@@ -76,33 +76,44 @@ class Muzak
   end
 
   def frequency_for(f)
-    @tbl[f] or raise ArgumentError, f
+    @tbl[f[:octave]][f[:name]] or raise ArgumentError, f
   end
 
   def parse(str)
-    str = str.gsub(/[^A-G0-9#b ]+/, '')
-    # Note, optionally sharp or flat, followed by duration in 1/s.
-    str.scan(/([A-G ][#b]?)(\d*)/).map do |note, dur|
-      dur = dur.to_i
-      dur = dur.zero? ? 1 : dur
-      { frequency: note, duration: 1.0 / dur }
+    str = str.gsub(/[^A-G0-9#b\^,_+-]+/, '')
+
+    str.scan(/([A-G_][#b]?)(\^[+-]{0,1}\d)?(,\d+)?/).map do |note, octave, dur|
+      dur = dur.nil? ? 1 : dur[1..-1].to_i
+      octave = if octave.nil?
+                 @octave
+               elsif octave.start_with?('^+')
+                 @octave + octave[2..-1].to_i
+               elsif octave.start_with?('^-')
+                 @octave - octave[2..-1].to_i
+               else
+                 octave[1..-1].to_i
+               end
+      { name: note, octave: octave, duration: 1.0 / dur }
     end
   end
 
   R = 1.05946309436
   def build_freq
-    c = 16.35 * (2 ** @octave)
+    @tbl = []
 
-    @tbl = {
-      ' ' => 0.0,
-      'C' => c,
-    }
+    (0..8).each do |o|
+      c = 16.35 * (2 ** o)
+      freq = c
 
-    freq = c
+      @tbl.push(
+        '_' => 0.0,
+        'C' => c
+      )
 
-    [['C#', 'Db'], 'D', ['D#', 'Eb'], 'E', 'F', ['F#', 'Gb'], 'G', ['G#', 'Ab'], 'A', ['A#', 'Bb'], 'B'].each do |n|
-      freq *= R
-      Array(n).each{ |nx| @tbl[nx] = freq }
+      [['C#', 'Db'], 'D', ['D#', 'Eb'], 'E', 'F', ['F#', 'Gb'], 'G', ['G#', 'Ab'], 'A', ['A#', 'Bb'], 'B'].each do |n|
+        freq *= R
+        Array(n).each{ |nx| @tbl.last[nx] = freq }
+      end
     end
   end
 end
@@ -116,12 +127,17 @@ end
 muzak = Muzak.new(opts)
 
 if STDIN.tty?
-  puts "Enter a list of notes and beat counts."
-  puts "Example: C#4Gb (play C# for 1/4 second followed by Gb for 1 second)"
+  puts "Syntax: <Note>[^Octave][,Duration] - Octave and Duration optional."
+  puts "\tOctave - absolute number 0-8, or relative number like +2 or -1"
+  puts "Examples:"
+  puts "\tBb     - B flat whole note in default octave"
+  puts "\tBb^+1  - B flat whole note up one octave"
+  puts "\tC#,4   - C# quarter note in default octave"
+  puts "\tA^3,2  - A half note in 3rd octave"
+  puts "\tF^5,16 - F sixteenth note in 5th octave"
+  puts "\t_,16   - rest for sixteenth note"
   puts ""
-  puts "Use a space to input a pause."
-  puts "Example: C#4 4Gb"
-
+  puts "\tA# A G F A# A G F A# A A# B C^+1 A G F - Meowmix theme song."
   muzak.repl
 else
   muzak.play(STDIN.read)
