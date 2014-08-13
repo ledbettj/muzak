@@ -11,6 +11,7 @@ module Muzak
     rule(:minus)  { str('-') }
     rule(:lt)     { str('<') }
     rule(:gt)     { str('>') }
+    rule(:at)     { str('@') }
 
     rule(:space)  { match("\s").repeat(1) }
     rule(:space?) { space.maybe }
@@ -23,11 +24,13 @@ module Muzak
 
     rule(:program) { stmt.repeat(0) }
     rule(:stmt)    { space? >> expr >> space? >> str(';') }
-    rule(:expr)    { note_list.as(:notes) | chord.as(:chord) }
+    rule(:expr)    { note_list.as(:notes) | chord.as(:chord) | cmd.as(:command) }
 
     rule(:chord)     { lt >> note_list >> gt }
     rule(:note_list) { note.as(:note).repeat(1) }
     rule(:note)      { name.as(:name) >> octave.maybe >> timing.maybe >> space? }
+
+    rule(:cmd) { at >> match('[A-Za-z]').repeat(1).as(:command) >> lparen >> space? >> number.as(:value) >> space? >> rparen }
 
     rule(:name)          { letter >> sharp_or_flat.maybe }
     rule(:letter)        { match('[A-G_]') }
@@ -41,6 +44,7 @@ module Muzak
       rule(note: subtree(:x))   { Note.new(x) }
       rule(chord: sequence(:x)) { Chord.new(x) }
       rule(notes: sequence(:x)) { NoteList.new(x) }
+      rule(command: subtree(:x)) { Command.new(x) }
     end
 
     def transformer

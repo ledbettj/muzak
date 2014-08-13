@@ -70,4 +70,19 @@ module Muzak
       notes.flat_map { |n| n.samples(ctx) }
     end
   end
+
+  class Command
+    attr_reader :name
+    attr_reader :value
+
+    def initialize(h)
+      @name  = h[:command]
+      @value = h[:value].to_i
+    end
+
+    def samples(ctx)
+      ctx.send("#{@name}=", @value)
+      []
+    end
+  end
 end
