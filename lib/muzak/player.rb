@@ -12,7 +12,7 @@ module Muzak
     attr_accessor :format, :buffer_format
 
     def initialize(opts = {})
-      @ctx = Muzak::Context.new
+      @ctx = Muzak::Context.new(bpm: opts[:bpm], octave: opts[:octave])
 
       @format = WaveFile::Format.new(:mono, :pcm_16, @ctx.sample_rate)
       @buffer_format = WaveFile::Format.new(:mono, :float,  @ctx.sample_rate)

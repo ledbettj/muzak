@@ -23,7 +23,7 @@ module Muzak
     root(:program)
 
     rule(:program) { stmt.repeat(0) }
-    rule(:stmt)    { space? >> expr >> repeater.maybe >> space? >> str(';') }
+    rule(:stmt)    { space? >> expr >> space? >> repeater.maybe >> space? >> str(';') }
     rule(:expr)    { note_list.as(:notes) | chord.as(:chord) | cmd.as(:command) }
 
     rule(:chord)     { lt >> note_list >> gt }
@@ -56,6 +56,8 @@ module Muzak
     end
 
     def parse_and_transform(text)
+      text = text.dup
+      text.strip!
       text << ';' unless text.end_with?(';')
       transformer.apply(parse(text))
     end

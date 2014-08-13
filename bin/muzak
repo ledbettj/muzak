@@ -12,8 +12,10 @@ end
 player = Muzak::Player.new(opts)
 
 if STDIN.tty?
-  puts "Syntax: <Note>[^Octave][,Duration] - Octave and Duration optional."
-  puts "\tOctave - absolute number 0-8, or relative number like +2 or -1"
+  puts "Note Syntax: Note^Octave,Duration - Octave and Duration optional."
+  puts "\tDuration - Integer representing the fraction of a beat to last."
+  puts "\tOctave   - absolute number 0-8, or relative number like +2 or -1"
+  puts ""
   puts "Examples:"
   puts "\tBb     - B flat whole note in default octave"
   puts "\tBb^+1  - B flat whole note up one octave"
@@ -22,7 +24,14 @@ if STDIN.tty?
   puts "\tF^5,16 - F sixteenth note in 5th octave"
   puts "\t_,16   - rest for sixteenth note"
   puts ""
-  puts "\tA# A G F A# A G F A# A A# B C^+1 A G F - Meowmix theme song."
+  puts "Advanced Syntax:"
+  puts "\t<C A D>    - Play C, A, D at the same time"
+  puts "\tC A D x5   - Play C, A, D five times"
+  puts "\t@octave(3) - Change to 3rd octave"
+  puts "\t@bpm(120)  - Change BPM to 120"
+  puts ""
+  puts "Meowmix Theme Song:"
+  puts "\t@octave(4); @bpm(480); A# A G F x2; A# A A# B C^+1 A G F ;"
   player.repl
 else
   player.play(STDIN.read)
