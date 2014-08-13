@@ -30,7 +30,8 @@ module Muzak
       @symtab[ident]
     end
 
-    R = 1.05946309436
+    R = 2 ** (1.0/12)
+
     def self.build_freq
       tbl = []
 

@@ -57,7 +57,7 @@ module Muzak
         end
       end
 
-      m = aggregate.max{|v| v.abs }.abs
+      m = aggregate.map{|v| v.abs}.max
       (1..aggregate.length - 1).each do |i|
         aggregate[i] /= m
       end if m > 1.0
