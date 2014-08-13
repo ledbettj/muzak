@@ -2,8 +2,15 @@ GEM
   remote: https://rubygems.org/
   specs:
     blankslate (2.1.2.4)
+    coderay (1.1.0)
+    method_source (0.8.2)
     parslet (1.6.1)
       blankslate (~> 2.0)
+    pry (0.10.0)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    slop (3.5.0)
     trollop (2.0)
     wavefile (0.6.0)
 
@@ -12,5 +19,6 @@ PLATFORMS
 
 DEPENDENCIES
   parslet
+  pry
   trollop
   wavefile

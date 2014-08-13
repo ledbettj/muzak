@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+
+require 'muzak/player'
+require 'trollop'
+
+opts = Trollop::options do
+  opt :bpm,    "Beats per minute (default 240)", type: :int, default: 240
+  opt :octave, "Octave to use (default 4)",      type: :int, default: 4
+end
+
+player = Muzak::Player.new(opts)
+
+if STDIN.tty?
+  puts "Syntax: <Note>[^Octave][,Duration] - Octave and Duration optional."
+  puts "\tOctave - absolute number 0-8, or relative number like +2 or -1"
+  puts "Examples:"
+  puts "\tBb     - B flat whole note in default octave"
+  puts "\tBb^+1  - B flat whole note up one octave"
+  puts "\tC#,4   - C# quarter note in default octave"
+  puts "\tA^3,2  - A half note in 3rd octave"
+  puts "\tF^5,16 - F sixteenth note in 5th octave"
+  puts "\t_,16   - rest for sixteenth note"
+  puts ""
+  puts "\tA# A G F A# A G F A# A A# B C^+1 A G F - Meowmix theme song."
+  player.repl
+else
+  player.play(STDIN.read)
+end
+
