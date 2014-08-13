@@ -20,17 +20,21 @@ module Muzak
 
 
     def write(filename, text)
+      s = samples(text)
       WaveFile::Writer.new(filename, format) do |w|
-        w.write WaveFile::Buffer.new(samples(text), buffer_format)
-      end
+        w.write WaveFile::Buffer.new(s, buffer_format)
+      end if s.any?
+
+      s.any?
     end
 
     def play(text)
       f = nil
       f = "/tmp/#{SecureRandom.uuid}.wav" while f.nil? || File.exists?(f)
 
-      write(f, text)
-      linux? ?  `aplay -q #{f}` : `afplay #{f}`
+      if write(f, text)
+        linux? ?  `aplay -q #{f}` : `afplay #{f}`
+      end
     end
 
     def repl
