@@ -23,7 +23,7 @@ module Muzak
     root(:program)
 
     rule(:program) { stmt.repeat(0) }
-    rule(:stmt)    { space? >> expr >> space? >> str(';') }
+    rule(:stmt)    { space? >> expr >> repeater.maybe >> space? >> str(';') }
     rule(:expr)    { note_list.as(:notes) | chord.as(:chord) | cmd.as(:command) }
 
     rule(:chord)     { lt >> note_list >> gt }
@@ -39,11 +39,15 @@ module Muzak
     rule(:octave) { caret >> signed_number.as(:octave) }
     rule(:timing) { comma >> number.as(:timing) }
 
+    rule(:repeater) { str('x') >> number.as(:count) }
 
     class Transform < Parslet::Transform
       rule(note: subtree(:x))   { Note.new(x) }
       rule(chord: sequence(:x)) { Chord.new(x) }
+      rule(chord: sequence(:x), count: simple(:d)) { Chord.new(x, count: d.to_i) }
       rule(notes: sequence(:x)) { NoteList.new(x) }
+      rule(notes: sequence(:x), count: simple(:d)) { NoteList.new(x, count: d.to_i) }
+
       rule(command: subtree(:x)) { Command.new(x) }
     end
 

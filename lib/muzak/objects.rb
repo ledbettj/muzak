@@ -3,7 +3,7 @@ module Muzak
     attr_reader :name, :octave, :timing
 
     def initialize(n)
-      @name   = n[:name]
+      @name   = n[:name].to_s
       @timing = (n[:timing] || 1).to_i
 
       @relative = n[:octave].nil? || %w(+ -).include?(n[:octave].to_s[0])
@@ -32,13 +32,20 @@ module Muzak
   end
 
   class Chord
-    attr_reader :notes
+    attr_reader :notes, :count
 
-    def initialize(notes)
+    def initialize(notes, count: 1)
       @notes = notes
+      @count = count
     end
 
     def samples(ctx)
+      count.times.flat_map{ sample_once(ctx) }
+    end
+
+    private
+
+    def sample_once(ctx)
       # TODO: this is horribly broken and sounds awful
       individual = notes.map{ |n| n.samples(ctx) }
       aggregate  = []
@@ -60,13 +67,20 @@ module Muzak
   end
 
   class NoteList
-    attr_reader :notes
+    attr_reader :notes, :count
 
-    def initialize(notes)
+    def initialize(notes, count: 1)
       @notes = notes
+      @count = count
     end
 
     def samples(ctx)
+      count.times.flat_map{ sample_once(ctx) }
+    end
+
+    private
+
+    def sample_once(ctx)
       notes.flat_map { |n| n.samples(ctx) }
     end
   end
@@ -76,7 +90,7 @@ module Muzak
     attr_reader :value
 
     def initialize(h)
-      @name  = h[:command]
+      @name  = h[:command].to_s
       @value = h[:value].to_i
     end
 
