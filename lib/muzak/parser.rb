@@ -30,7 +30,7 @@ module Muzak
     rule(:note)      { name.as(:name) >> octave.maybe >> timing.maybe >> space? }
 
     rule(:name)          { letter >> sharp_or_flat.maybe }
-    rule(:letter)        { match('[A-G]') }
+    rule(:letter)        { match('[A-G_]') }
     rule(:sharp_or_flat) { match('[#b]')  }
 
     rule(:octave) { caret >> signed_number.as(:octave) }
