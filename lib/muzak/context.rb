@@ -6,6 +6,8 @@ module Muzak
       @octave = octave
       @bpm    = bpm
       @sample_rate = sample_rate
+
+      @symtab = {}
     end
 
     def frequency_for(note)
@@ -18,6 +20,14 @@ module Muzak
 
     def octave_for(note)
       note.octave + (note.relative_octave? ? @octave : 0)
+    end
+
+    def define_symbol(ident, chord)
+      @symtab[ident] = chord
+    end
+
+    def lookup_symbol(ident)
+      @symtab[ident]
     end
 
     R = 1.05946309436

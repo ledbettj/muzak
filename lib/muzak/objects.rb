@@ -99,4 +99,37 @@ module Muzak
       []
     end
   end
+
+  class Assignment
+    attr_reader :identifier
+    attr_reader :chord
+    def initialize(a)
+      @identifier = a[:identifier].to_s
+      @chord = Chord.new(a[:chord])
+    end
+
+    def samples(ctx)
+      ctx.define_symbol(identifier, chord)
+
+      []
+    end
+  end
+
+  class Invocation
+    attr_reader :identifier
+    attr_reader :count
+    def initialize(n, count: 1)
+      @identifier = n[:identifier].to_s
+      @count = count
+    end
+
+    def samples(ctx)
+      count.times.flat_map{ sample_once(ctx) }
+    end
+
+    private
+    def sample_once(ctx)
+      ctx.lookup_symbol(identifier).samples(ctx)
+    end
+  end
 end
