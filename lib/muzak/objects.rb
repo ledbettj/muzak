@@ -1,32 +1,37 @@
 module Muzak
-  class Note
-    attr_reader :name, :octave, :timing
 
-    def initialize(n)
-      @name   = n[:name].to_s
+  class Note
+    attr_reader :name, :octave, :timing, :count
+
+    def initialize(n, count: 1)
+      @count = count
+      @name = n[:name].to_s
+      @octave = n[:octave].to_i
       @timing = (n[:timing] || 1).to_i
 
       @relative = n[:octave].nil? || %w(+ -).include?(n[:octave].to_s[0])
-      @octave   = n[:octave].to_i
+
     end
 
     def relative_octave?
       @relative
     end
 
-    def samples(ctx)
-      frequency   = ctx.frequency_for(self)
-      duration    = ctx.duration_for(self)
-      frame_count = (duration * ctx.sample_rate).to_i
-      cycles_per_frame = frequency /  ctx.sample_rate
+    def run(ctx)
+      frequency  = ctx.frequency_for(self)
+      duration   = ctx.duration_for(self)
+      frame_cnt  = (duration * ctx.sample_rate).to_i
+      cycles_per = frequency / ctx.sample_rate
 
-      i = 2 * Math::PI * cycles_per_frame
-      phase = 0
+      count.times.flat_map do
+        iter  = 2 * Math::PI * cycles_per
+        phase = 0
 
-      frame_count.times.map do
-        sample = Math.sin(phase)
-        phase += i
-        sample
+        frame_cnt.times.map do
+          sample = Math.sin(phase)
+          phase += iter
+          sample
+        end
       end
     end
   end
@@ -35,101 +40,104 @@ module Muzak
     attr_reader :notes, :count
 
     def initialize(notes, count: 1)
-      @notes = notes
       @count = count
+      @notes = notes.map{|n| Note.new(n)}
     end
 
-    def samples(ctx)
-      count.times.flat_map{ sample_once(ctx) }
-    end
+    def run(ctx)
+      count.times.flat_map do
+        individual = notes.map{ |n| n.run(ctx) }
+        aggregate  = []
 
-    private
-
-    def sample_once(ctx)
-      # TODO: this is horribly broken and sounds awful
-      individual = notes.map{ |n| n.samples(ctx) }
-      aggregate  = []
-
-      individual.each do |s|
-        s.each_with_index do |value, i|
-          aggregate[i] ||= 0
-          aggregate[i] += value
+        individual.each do |samples|
+          samples.each_with_index do |value, i|
+            aggregate[i] ||= 0
+            aggregate[i] += value
+          end
         end
+
+        max = aggregate.map{|value| value.abs}.max
+
+        (1..aggregate.length-1).each do |index|
+          aggregate[index] /= max
+        end if max > 1.0
+
+        aggregate
       end
-
-      m = aggregate.map{|v| v.abs}.max
-      (1..aggregate.length - 1).each do |i|
-        aggregate[i] /= m
-      end if m > 1.0
-
-      aggregate
     end
   end
 
-  class NoteList
-    attr_reader :notes, :count
+  class Dereference
+    attr_reader :name, :count
 
-    def initialize(notes, count: 1)
-      @notes = notes
+    def initialize(name, count: 1)
       @count = count
+      @name  = name.to_s
     end
 
-    def samples(ctx)
-      count.times.flat_map{ sample_once(ctx) }
-    end
+    def run(ctx)
+      sym = Array(ctx.lookup_symbol(name))
 
-    private
-
-    def sample_once(ctx)
-      notes.flat_map { |n| n.samples(ctx) }
-    end
-  end
-
-  class Command
-    attr_reader :name
-    attr_reader :value
-
-    def initialize(h)
-      @name  = h[:command].to_s
-      @value = h[:value].to_i
-    end
-
-    def samples(ctx)
-      ctx.send("#{@name}=", @value)
-      []
+      count.times.flat_map do
+        sym.flat_map{ |w| w.run(ctx) }
+      end
     end
   end
 
   class Assignment
-    attr_reader :identifier
-    attr_reader :chord
-    def initialize(a)
-      @identifier = a[:identifier].to_s
-      @chord = Chord.new(a[:chord])
+    attr_reader :name, :value
+
+    def initialize(name, value)
+      @name = name.to_s
+      @value = value
     end
 
-    def samples(ctx)
-      ctx.define_symbol(identifier, chord)
-
+    def run(ctx)
+      ctx.define_symbol(name, value)
       []
     end
   end
 
-  class Invocation
-    attr_reader :identifier
-    attr_reader :count
-    def initialize(n, count: 1)
-      @identifier = n[:identifier].to_s
-      @count = count
+  class Exec
+    attr_reader :what, :count
+    def initialize(what)
+      @count = 1
+
+      @what = Array(what)
+      if @what.last.is_a?(Hash) && @what.last.key?(:count)
+        @count = @what.last[:count].to_i
+        @what.pop
+      end
     end
 
-    def samples(ctx)
-      count.times.flat_map{ sample_once(ctx) }
+    def run(ctx)
+      count.times.flat_map do
+        what.flat_map { |w| w.run(ctx) }
+      end
+    end
+  end
+
+  class Command
+    attr_reader :type, :value
+
+    def initialize(type, value = nil)
+      @type  = type.to_s.to_sym
+      @value = value.to_i
     end
 
-    private
-    def sample_once(ctx)
-      ctx.lookup_symbol(identifier).samples(ctx)
+    def run(ctx)
+      case type
+      when :bpm
+        ctx.bpm = value
+      when :octave_up
+        ctx.octave += 1
+      when :octave_down
+        ctx.octave -= 1
+      when :octave
+        ctx.octave = value
+      end
+
+      []
     end
   end
 end

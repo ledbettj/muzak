@@ -53,7 +53,7 @@ module Muzak
 
     def samples(text)
       parse(text).flat_map do |object|
-        object.samples(@ctx)
+        object.run(@ctx)
       end
     end
 

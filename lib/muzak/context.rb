@@ -22,8 +22,8 @@ module Muzak
       note.octave + (note.relative_octave? ? @octave : 0)
     end
 
-    def define_symbol(ident, chord)
-      @symtab[ident] = chord
+    def define_symbol(ident, value)
+      @symtab[ident] = value
     end
 
     def lookup_symbol(ident)

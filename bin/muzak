@@ -12,32 +12,11 @@ end
 player = Muzak::Player.new(opts)
 
 if STDIN.tty?
-  puts "Note Syntax: Note^Octave,Duration - Octave and Duration optional."
-  puts "\tDuration - Integer representing the fraction of a beat to last."
-  puts "\tOctave   - absolute number 0-8, or relative number like +2 or -1"
-  puts ""
-  puts "Examples:"
-  puts "\tBb     - B flat whole note in default octave"
-  puts "\tBb^+1  - B flat whole note up one octave"
-  puts "\tC#,4   - C# quarter note in default octave"
-  puts "\tA^3,2  - A half note in 3rd octave"
-  puts "\tF^5,16 - F sixteenth note in 5th octave"
-  puts "\t_,16   - rest for sixteenth note"
-  puts ""
-  puts "Advanced Syntax:"
-  puts "\t<C A D>    - Play C, A, D at the same time"
-  puts "\tC A D x5   - Play C, A, D five times"
-  puts "\t@octave(3) - Change to 3rd octave"
-  puts "\t@bpm(120)  - Change BPM to 120"
-  puts ""
-  puts "Assignment and Invocation:"
-  puts "\tlet Emajor = <E G# B>"
-  puts "\t[Emajor] x3;"
-  puts ""
   puts "Meowmix Theme Song:"
-  puts "\t@octave(4); @bpm(480); A# A G F x2; A# A A# B C^+1 A G F ;"
+  puts "\t @4; %480; [A# A G F] x2; [A# A A# B C^+1 A G F] ;"
   puts "Happy Birthday:"
-  puts "\tC,8 x2 ; D,4 C,4 F,4 E; C,8 x2; D,4 C,4 G,4 F; C,8 x2 ; C^+1,4 A,4 F,4 E,4 D ; Bb,8 x2 ; A,4 F,4 G,4 F;"
+  puts "\tC,8 x2 ; [D,4 C,4 F,4 E] ; C,8 x2; [D,4 C,4 G,4 F]; C,8 x2 ; [C^+1,4 A,4 F,4 E,4 D] ; Bb,8 x2 ; [A,4 F,4 G,4 F];"
+
   player.repl
 else
   player.play(STDIN.read)
