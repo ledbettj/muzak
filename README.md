@@ -168,6 +168,7 @@ Right now the only filters available are:
 * `clip` - clips values above `threshold` or below `-threshold`.
 * `compress` - like `clip`, but instead of setting automatically to +/- threshold, it instead
 scales the amount above the threshold by `scale`.  For example, given a threshold of 3, a scale of 1/4, and a value of 7, we would compute the new value to be (7 - 3) * 1/4 + 3 = 4.
+* `distort` - multiplies the values by `scale` and then clips them to `1.0`.
 
 ### Other commands
 

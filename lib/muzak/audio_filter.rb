@@ -23,6 +23,21 @@ module Muzak
     # filter that does nothing
     filter('null') { |samples, args| samples }
 
+    filter('distort') do |samples, args|
+      scale = args[:scale] || 2
+
+      samples.map do |v|
+        v *= scale
+        if v > 1.0
+          1.0
+        elsif v < -1.0
+          -1.0
+        else
+          v
+        end
+      end
+    end
+
     filter('clip') do |samples, args|
       threshold = args[:threshold] || 0.5
       samples.map do |value|
