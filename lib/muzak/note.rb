@@ -9,6 +9,18 @@ module Muzak
       @timing = (n[:timing] || 1).to_i
     end
 
+    def to_s
+      s = "#{name}"
+      s << "^#{octave}" unless octave.zero?
+      s << ",#{timing}" unless timing == 1
+      s << " x#{count}" unless count == 1
+      s
+    end
+
+    def validate
+      raise ValidationError, "Timing can't be zero" if timing.zero?
+    end
+
     def run(ctx)
       frequency  = ctx.frequency_for(self)
       duration   = ctx.duration_for(self)

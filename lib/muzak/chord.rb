@@ -9,6 +9,21 @@ module Muzak
       @octave = ch[:octave].to_i
     end
 
+    def validate
+      notes.each do |n|
+        raise ValidationError.new("'#{self}' : Notes inside chords can't have timing.") if n.timing != 1
+      end
+    end
+
+    def to_s
+      s = "<#{notes.join(' ')}>"
+      s << "^#{octave}" unless octave.zero?
+      s << ",#{timing}" unless timing == 1
+      s << " x#{count}" unless count == 1
+
+      s
+    end
+
     def run(ctx)
       count.times.flat_map do
         individual = notes.map{ |n| run_for(n,ctx) }

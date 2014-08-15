@@ -74,9 +74,12 @@ module Muzak
     end
 
     def samples(text)
-      parse(text).flat_map do |object|
-        object.run(@ctx)
-      end
+      objects = parse(text)
+      objects.each(&:validate)
+      objects.flat_map { |o| o.run(@ctx) }
+    rescue Muzak::ValidationError => e
+      STDERR.write("Error: #{e.message}\n")
+      []
     end
 
     def parse(str)

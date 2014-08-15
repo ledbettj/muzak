@@ -7,6 +7,16 @@ module Muzak
       @name  = name.to_s
     end
 
+    def validate
+      # no op
+    end
+
+    def to_s
+      s = "(#{name})"
+      s << " x#{count}" unless count == 1
+      s
+    end
+
     def run(ctx)
       sym = Array(ctx.lookup_symbol(name))
 

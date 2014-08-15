@@ -7,6 +7,10 @@ module Muzak
       @value = value
     end
 
+    def validate
+      # no op
+    end
+
     def run(ctx)
       case type
       when :bpm

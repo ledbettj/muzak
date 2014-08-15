@@ -1,4 +1,5 @@
 require 'parslet'
+require 'muzak/validation_error'
 require 'muzak/note'
 require 'muzak/chord'
 require 'muzak/exec'
@@ -40,13 +41,12 @@ module Muzak
     rule(:repeater) { str('x') >> space? >> number.as(:count) >> space? }
 
     rule(:note) { note_name.as(:name) >> octave.maybe >> timing.maybe >> space? }
-    rule(:note_no_timing) { note_name.as(:name) >> octave.maybe >> space? }
 
     rule(:note_name) { match('[A-G_]') >> match('[#b]').maybe }
     rule(:octave)    { str('^') >> signed_number.as(:octave) }
     rule(:timing)    { str(',') >> number.as(:timing) }
 
-    rule(:chord)     { str('<') >> space? >> note_no_timing.repeat(1).as(:notes) >> str('>') >> octave.maybe >> timing.maybe >> space? }
+    rule(:chord)     { str('<') >> space? >> note.repeat(1).as(:notes) >> str('>') >> octave.maybe >> timing.maybe >> space? }
 
     rule(:execution) { expression }
 

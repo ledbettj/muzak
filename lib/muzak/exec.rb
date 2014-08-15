@@ -11,6 +11,10 @@ module Muzak
       end
     end
 
+    def validate
+      what.each(&:validate)
+    end
+
     def run(ctx)
       count.times.flat_map do
         what.flat_map { |w| w.run(ctx) }
