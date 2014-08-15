@@ -148,6 +148,27 @@ For your convenience, muzak predefines the following chord variables:
     let Am  = <A C E>
     let A7  = <A C# E G>
 
+### Audio Filters
+
+What if you could make this thing sound less crappy? That would be cool, right?
+Well you can't.  But you can do basic audio filters.
+
+Filters have a block form that looks like this:
+
+    |compress { C; A; D;}
+
+or to pass arguments:
+
+    |compress(threshold=0.5, scale=0.25) { C; A; D;}
+
+
+Right now the only filters available are:
+
+* `null` - does nothing.
+* `clip` - clips values above `threshold` or below `-threshold`.
+* `compress` - like `clip`, but instead of setting automatically to +/- threshold, it instead
+scales the amount above the threshold by `scale`.  For example, given a threshold of 3, a scale of 1/4, and a value of 7, we would compute the new value to be (7 - 3) * 1/4 + 3 = 4.
+
 ### Other commands
 
 Besides playing notes or chords or assigning variables, there are a few other

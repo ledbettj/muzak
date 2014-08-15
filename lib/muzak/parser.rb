@@ -6,6 +6,7 @@ require 'muzak/exec'
 require 'muzak/command'
 require 'muzak/assignment'
 require 'muzak/dereference'
+require 'muzak/filter'
 
 module Muzak
   class Parser < Parslet::Parser
@@ -15,15 +16,18 @@ module Muzak
 
     rule(:identifier) { match('[A-Za-z]') >> match('[A-Za-z0-9_]').repeat(0) }
     rule(:number)     { match('[0-9]').repeat(1) }
+    rule(:decimal)    { _decimal | number }
+    rule(:_decimal)   { number >> str('.') >> number }
     rule(:sign)       { str('-') | str('+') }
     rule(:signed_number) { sign.maybe >> number }
+    rule(:signed_decimal) { sign.maybe >> decimal }
 
     root(:program)
 
     rule(:program) { terminated_statement.repeat(0) }
     rule(:terminated_statement) { statement >> space? >> terminator >> space? }
 
-    rule(:statement) { assignment.as(:assign) | execution.as(:exec) | command.as(:cmd) }
+    rule(:statement) { assignment.as(:assign) | execution.as(:exec) | command.as(:cmd) | filter_block.as(:filter) }
 
     rule(:command) { octave_up | octave_set | octave_down | bpm_set }
     rule(:octave_up)   { str('^^').as(:octave_up) }
@@ -52,6 +56,14 @@ module Muzak
 
     rule(:dereference) { str('(') >> space? >> identifier.as(:name) >> space? >> str(')') >> space? }
 
+
+    rule(:filter_block) { str('|') >> space? >> identifier.as(:name) >> space? >> filter_args.maybe.as(:args) >> space? >> str('{') >> space? >> terminated_statement.repeat(0).as(:statements) >> str('}') }
+
+    rule(:filter_args) { str('(') >> space? >> arg_list >> space? >> str(')') }
+    rule(:arg) { identifier.as(:name) >> space? >> str('=') >> space? >> signed_decimal.as(:value) >> space? }
+    rule(:arg_with_comma) { arg >> str(',') >> space? }
+    rule(:arg_list) { arg_with_comma.as(:arg).repeat(0) >> arg.as(:arg) }
+
     class Transform < Parslet::Transform
       rule(note: subtree(:x), count: simple(:d)) { Note.new(x, count: d.to_i) }
       rule(note: subtree(:x)) { Note.new(x) }
@@ -63,7 +75,8 @@ module Muzak
       rule(assign: { name: simple(:n), value: subtree(:x) }) { Assignment.new(n, x)}
       rule(exec: subtree(:x)) { Exec.new(x) }
 
-      rule(:cmd => subtree(:x)) { Command.new(*x.first) }
+      rule(cmd: subtree(:x)) { Command.new(*x.first) }
+      rule(filter: {name: simple(:n), args: subtree(:args), statements: subtree(:x)}) { Filter.new(n, args, x) }
     end
 
     def transformer
