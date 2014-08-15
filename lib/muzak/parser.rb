@@ -1,5 +1,10 @@
 require 'parslet'
-require 'muzak/objects'
+require 'muzak/note'
+require 'muzak/chord'
+require 'muzak/exec'
+require 'muzak/command'
+require 'muzak/assignment'
+require 'muzak/dereference'
 
 module Muzak
   class Parser < Parslet::Parser
