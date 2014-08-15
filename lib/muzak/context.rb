@@ -19,7 +19,7 @@ module Muzak
     end
 
     def octave_for(note)
-      note.octave + (note.relative_octave? ? @octave : 0)
+      note.octave + self.octave
     end
 
     def define_symbol(ident, value)

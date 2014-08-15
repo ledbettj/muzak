@@ -8,13 +8,6 @@ module Muzak
       @name = n[:name].to_s
       @octave = n[:octave].to_i
       @timing = (n[:timing] || 1).to_i
-
-      @relative = n[:octave].nil? || %w(+ -).include?(n[:octave].to_s[0])
-
-    end
-
-    def relative_octave?
-      @relative
     end
 
     def run(ctx)
@@ -37,16 +30,18 @@ module Muzak
   end
 
   class Chord
-    attr_reader :notes, :count
+    attr_reader :notes, :count, :octave, :timing
 
-    def initialize(notes, count: 1)
+    def initialize(ch, count: 1)
       @count = count
-      @notes = notes.map{|n| Note.new(n)}
+      @notes = ch[:notes].map{|n| Note.new(n)}
+      @timing = (ch[:timing] || 1).to_i
+      @octave = ch[:octave].to_i
     end
 
     def run(ctx)
       count.times.flat_map do
-        individual = notes.map{ |n| n.run(ctx) }
+        individual = notes.map{ |n| run_for(n,ctx) }
         aggregate  = []
 
         individual.each do |samples|
@@ -63,6 +58,26 @@ module Muzak
         end if max > 1.0
 
         aggregate
+      end
+    end
+
+    private
+
+    def run_for(note, ctx)
+      octave = ctx.octave + self.octave + note.octave
+
+      frequency  = Muzak::Context::TABLE[octave][note.name]
+      duration   = ctx.duration_for(self)
+      frame_cnt  = (duration * ctx.sample_rate).to_i
+      cycles_per = frequency / ctx.sample_rate
+
+      iter  = 2 * Math::PI * cycles_per
+      phase = 0
+
+      frame_cnt.times.map do
+        sample = Math.sin(phase)
+        phase += iter
+        sample
       end
     end
   end

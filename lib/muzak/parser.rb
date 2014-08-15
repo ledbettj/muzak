@@ -35,11 +35,13 @@ module Muzak
     rule(:repeater) { str('x') >> space? >> number.as(:count) >> space? }
 
     rule(:note) { note_name.as(:name) >> octave.maybe >> timing.maybe >> space? }
-    rule(:note_name) { match('[A-G]') >> match('[#b]').maybe }
+    rule(:note_no_timing) { note_name.as(:name) >> octave.maybe >> space? }
+
+    rule(:note_name) { match('[A-G_]') >> match('[#b]').maybe }
     rule(:octave)    { str('^') >> signed_number.as(:octave) }
     rule(:timing)    { str(',') >> number.as(:timing) }
 
-    rule(:chord)     { str('<') >> space? >> note.repeat(1).as(:notes) >> str('>') >> space? }
+    rule(:chord)     { str('<') >> space? >> note_no_timing.repeat(1).as(:notes) >> str('>') >> octave.maybe >> timing.maybe >> space? }
 
     rule(:execution) { expression }
 
@@ -50,8 +52,8 @@ module Muzak
       rule(note: subtree(:x)) { Note.new(x) }
       rule(call: subtree(:x), count: simple(:d)) { Dereference.new(x[:name], count: d.to_i) }
       rule(call: subtree(:x)) { Dereference.new(x[:name]) }
-      rule(chord: subtree(:x), count: simple(:d)) { Chord.new(x[:notes], count: d.to_i) }
-      rule(chord: subtree(:x)) { Chord.new(x[:notes]) }
+      rule(chord: subtree(:x), count: simple(:d)) { Chord.new(x, count: d.to_i) }
+      rule(chord: subtree(:x)) { Chord.new(x) }
 
       rule(assign: { name: simple(:n), value: subtree(:x) }) { Assignment.new(n, x)}
       rule(exec: subtree(:x)) { Exec.new(x) }

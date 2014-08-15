@@ -11,11 +11,29 @@ module Muzak
   class Player
     attr_accessor :format, :buffer_format
 
+    CHORDS = {
+      'C'   => 'C E G',
+      'Cm'  => 'C Eb G',
+      'D'   => 'D F# A',
+      'Dm'  => 'D F A',
+      'E'   => 'E G# B',
+      'Em'  => 'E G B',
+      'F'   => 'F A C',
+      'Fm'  => 'F Ab C',
+      'G'   => 'G B D',
+      'Gm'  => 'G Bb D',
+      'A'   => 'A C# E',
+      'Am'  => 'A C E',
+      'A7'  => 'A C# E G'
+    }
+
     def initialize(opts = {})
       @ctx = Muzak::Context.new(bpm: opts[:bpm], octave: opts[:octave])
 
       @format = WaveFile::Format.new(:mono, :pcm_16, @ctx.sample_rate)
       @buffer_format = WaveFile::Format.new(:mono, :float,  @ctx.sample_rate)
+
+      load_chords
     end
 
 
@@ -46,6 +64,10 @@ module Muzak
     end
 
     private
+
+    def load_chords
+      play(CHORDS.map{ |k, v| "let #{k} = <#{v}>"}.join(';'))
+    end
 
     def linux?
       RbConfig::CONFIG['host_os'] =~ /linux/
