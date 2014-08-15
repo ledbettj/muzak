@@ -9,9 +9,13 @@ opts = Trollop::options do
   opt :octave, "Octave to use (default 4)",      type: :int, default: 4
 end
 
+files = ARGV
+
 player = Muzak::Player.new(opts)
 
-if STDIN.tty?
+if files.any?
+  files.each{ |f| player.play(File.read(f)) }
+elsif STDIN.tty?
   puts "Meowmix Theme Song:"
   puts "\t @4; %480; [A# A G F] x2; [A# A A# B C^+1 A G F] ;"
   puts "Happy Birthday:"
