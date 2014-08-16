@@ -54,7 +54,7 @@ module Muzak
 
     rule(:execution) { expression }
 
-    rule(:dereference) { str('(') >> space? >> identifier.as(:name) >> space? >> str(')') >> space? }
+    rule(:dereference) { str('(') >> space? >> identifier.as(:name) >> space? >> str(')') >> octave.maybe >> timing.maybe >> space? }
 
 
     rule(:filter_block) { str('|') >> space? >> identifier.as(:name) >> space? >> filter_args.maybe.as(:args) >> space? >> str('{') >> space? >> terminated_statement.repeat(0).as(:statements) >> str('}') }
@@ -67,8 +67,8 @@ module Muzak
     class Transform < Parslet::Transform
       rule(note: subtree(:x), count: simple(:d)) { Note.new(x, count: d.to_i) }
       rule(note: subtree(:x)) { Note.new(x) }
-      rule(call: subtree(:x), count: simple(:d)) { Dereference.new(x[:name], count: d.to_i) }
-      rule(call: subtree(:x)) { Dereference.new(x[:name]) }
+      rule(call: subtree(:x), count: simple(:d)) { Dereference.new(x, count: d.to_i) }
+      rule(call: subtree(:x)) { Dereference.new(x) }
       rule(chord: subtree(:x), count: simple(:d)) { Chord.new(x, count: d.to_i) }
       rule(chord: subtree(:x)) { Chord.new(x) }
 
