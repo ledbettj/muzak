@@ -105,6 +105,17 @@ You can play that variable by using parenthesis around it's name.
     A,4 x4
     (phrase)
 
+You can also change the octave when referencing them:
+
+    let phrase = [B A G _]
+    (phrase)^1
+    
+If the variable is a single sound, you can also change it's timing:
+
+    let Am = <A C E>;
+    (Am),4
+    
+You can't change the timing of a list of notes or sounds.  That doesn't make any sense.
 
 ### Chords
 
